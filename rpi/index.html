@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Remote Control</title>  
+  <script src="jquery-1.9.1.min.js"></script>
+</head>
+<body>
+<img id="camera" src="/camera.jpg" />
+<table cellspacing="0" cellpadding="0">
+  <tr>
+    <td></td>
+    <td><input id="forward-btn" style="height: 100px; width: 100px" type="button" value="Forward" /></td>
+    <td></td>
+  </tr>
+  <tr>
+    <td><input id="turn-left-btn" style="height: 100px; width: 100px" type="button" value="Left" /></td>
+    <td align="center">
+      <input id="turbo-chkbox" name="turbo-chkbox" type="checkbox">Turbo<br />
+      <input id="combo-chkbox" name="combo-chkbox" type="checkbox">Combo
+    </td>
+    <td><input id="turn-right-btn" style="height: 100px; width: 100px" type="button" value="Right" /></td>
+  </tr>
+  <tr>
+    <td></td>
+    <td><input id="backward-btn" style="height: 100px; width: 100px" type="button" value="Backward" /></td>
+    <td></td>
+  </tr>
+</table>
+</body>
+</html>
+
+<script>   
+var ROBOT = (function() {
+  var my = {},
+      host =  document.URL.replace('http://', 'ws://')+'ws';
+  my.socket = new WebSocket(host);
+
+  my.send = function(cmd) {
+    var combo = $('#combo-chkbox').prop('checked');
+    if (combo) {
+      cmd = cmd.toUpperCase();
+    }
+    my.socket.send(cmd);
+  };
+
+  my.handle_onkeyup = function() {
+    var keycode = event.keyCode;
+    switch(keycode) {
+    case 37:
+      my.send("a");
+      break;
+    case 38:
+      my.send("w");
+      break;
+    case 39:
+      my.send("d");
+      break;
+    case 40:
+      my.send("s");
+      break;
+    }
+  };
+
+  my.update_camera = function() {
+    var d = new Date();
+    $('#camera').attr('src', '/camera.jpg?'+d.getTime());
+  };
+  //setInterval(my.update_camera, 1000);
+
+  my.setup = function() {
+    document.onkeyup = my.handle_onkeyup;
+    $('#camera').click(function() {
+      my.update_camera();
+    });
+    $('#forward-btn').click(function() {
+      my.send('w');
+    });
+    $('#backward-btn').click(function() {
+      my.send('s');
+    });
+    $('#turn-left-btn').click(function() {
+      my.send('a');
+    });
+    $('#turn-right-btn').click(function() {
+      my.send('d');
+    });
+    $('#turbo-chkbox').click(function() {
+      var turbo = $('#turbo-chkbox').prop('checked');
+      if (turbo) {
+        my.send('9');
+      } else {
+        my.send('0');
+      }
+    });
+  };
+  return my;
+})();
+
+jQuery(function($) {
+  if (!("WebSocket" in window)) {
+    alert("Your browser does not support web sockets");
+    return;
+  }
+
+  ROBOT.setup();
+});
+
+</script>
